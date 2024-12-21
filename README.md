@@ -1,2 +1,2 @@
 # fxtictactoe
-Tic Tac Toe game built in JavaFX
+Tic Tac Toe game built in JavaFX.
