@@ -7,6 +7,7 @@ public class Player {
     private Integer score;
     
     public Player() {
+        this.score = 0;
     }
     
     public Player(String name, String role, Integer score) {
