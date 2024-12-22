@@ -31,7 +31,7 @@
                         <Font name="System Bold" size="18.0" />
                      </font>
                   </Label>
-                  <Label alignment="CENTER" prefHeight="116.0" prefWidth="210.0" text="Turn: " textFill="RED">
+                  <Label alignment="CENTER" prefHeight="116.0" prefWidth="210.0" text="Turn: " textFill="RED" fx:id="labelTurn">
                      <font>
                         <Font name="Berlin Sans FB Demi Bold" size="14.0" />
                      </font>
@@ -72,10 +72,10 @@
             <VBox prefHeight="172.0" prefWidth="220.0">
                <children>
                   <Label prefHeight="17.0" prefWidth="218.0" text="Leaderboard" />
-                  <TableView prefHeight="200.0" prefWidth="200.0">
+                  <TableView fx:id="leaderBoardTableView" prefHeight="200.0" prefWidth="200.0">
                      <columns>
-                        <TableColumn prefWidth="75.0" text="Wins" />
-                        <TableColumn prefWidth="142.0" text="Player Name" />
+                        <TableColumn fx:id="winsTableColumn" prefWidth="75.0" text="Wins" />
+                        <TableColumn fx:id="playerNameTableColumn" prefWidth="142.0" text="Player Name" />
                      </columns>
                   </TableView>
                </children>

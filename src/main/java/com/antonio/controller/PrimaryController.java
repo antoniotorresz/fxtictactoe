@@ -1,14 +1,24 @@
 package com.antonio.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import com.antonio.model.Player;
+import com.antonio.util.BoardValidations;
+import com.antonio.util.MessageLoader;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 
 public class PrimaryController {
@@ -16,11 +26,10 @@ public class PrimaryController {
     private final Player playerX = new Player();
     private final Player playerO = new Player();
     private Player activePlayer;
-    private final Integer playerXSumToWin = 3;
-    private final Integer playerOSumToWin = -3;
     private final HashMap<String, Integer> playerValues = new HashMap<>(
             Map.of("X", 1, "O", -1)
     );
+    private final List<String> phrases = MessageLoader.loadPhrasesFromFile();
 
     @FXML
     private TextField textField00;
@@ -40,15 +49,33 @@ public class PrimaryController {
     private TextField textField21;
     @FXML
     private TextField textField22;
-
+    @FXML
+    private Label labelTurn;
+    @FXML
+    private TableView<Player> leaderBoardTableView;
+    @FXML
+    private TableColumn<Player, Integer> winsTableColumn;
+    @FXML
+    private TableColumn<Player, String> playerNameTableColumn;
+    
     @FXML
     public void initialize() {
+        
+        //Player inititalization
         this.playerX.setName(getPlayerName("Player X"));
         this.playerX.setRole("X");
         this.playerO.setRole("O");
         this.playerO.setName(getPlayerName("Player O"));
         activePlayer = playerX;
+        this.labelTurn.setText("Turn: " + activePlayer.getName() + " (" + activePlayer.getRole() + ")");
+        
+        
+        //leader board initialization
+        winsTableColumn.setCellValueFactory(new PropertyValueFactory<>("score"));
+        playerNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        updateTable();
 
+        //Board initialization
         textField00.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
         textField01.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
         textField02.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
@@ -58,6 +85,16 @@ public class PrimaryController {
         textField20.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
         textField21.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
         textField22.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
+    }
+
+    private void updateTable() {
+        ObservableList<Player> leaderBoard = FXCollections.observableArrayList(
+                this.playerX,
+                this.playerO
+        );
+        FXCollections.sort(leaderBoard, (p1, p2) -> p2.getScore().compareTo(p1.getScore()));
+        leaderBoardTableView.setItems(leaderBoard);
+        leaderBoardTableView.refresh();
     }
 
     private String getPlayerName(final String defaultName) {
@@ -95,6 +132,7 @@ public class PrimaryController {
         if (source.getText().isEmpty()) {
             source.setText(activePlayer.getRole());
             activePlayer = activePlayer == playerX ? playerO : playerX;
+            this.labelTurn.setText("Turn: " + activePlayer.getName() + " (" + activePlayer.getRole() + ")");
             source.setDisable(true);
             checkIfWinner();
         }
@@ -124,86 +162,42 @@ public class PrimaryController {
 
     private void checkIfWinner() {
         Integer[][] board = getboard();
+        String winner = BoardValidations.validateRows(board);
+        Player winnerPlayer = null;
 
-        String winner = validateRows(board);
         if (winner == null) {
-            winner = validateColumns(board);
+            winner = BoardValidations.validateColumns(board);
         }
         if (winner == null) {
-            winner = validateDiagonals(board);
+            winner = BoardValidations.validateDiagonals(board);
         }
 
         if (winner != null) {
             if (winner.equals("X")) {
                 this.playerX.setScore(this.playerX.getScore() + 1);
+                winnerPlayer = this.playerX;
             } else if (winner.equals("O")) {
                 this.playerO.setScore(this.playerO.getScore() + 1);
+                winnerPlayer = this.playerO;
             }
             resetBoard();
+            showWinnerDialog(winnerPlayer);
+            updateTable();
         }
     }
 
-    private String validateRows(final Integer[][] board) {
-        for (Integer[] row : board) {
-            Integer sum = 0;
-            for (Integer cell : row) {
-                if (cell != null) {
-                    sum += cell;
-                }
-            }
-            if (sum.equals(this.playerXSumToWin)) {
-                return "X";
-            } else if (sum.equals(this.playerOSumToWin)) {
-                return "O";
-            }
-        }
-        return null;
+    private void showWinnerDialog(Player winnerPlayer) {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("The winner is " + winnerPlayer.getName());
+        dialog.setContentText(winnerPlayer.getName() + " says: " + this.getRandomWinningPhrase());
+        dialog.getDialogPane().getButtonTypes().addAll(javafx.scene.control.ButtonType.OK);
+        dialog.showAndWait();
     }
 
-    private String validateColumns(final Integer[][] board) {
-        for (Integer i = 0; i < 3; i++) {
-            Integer sum = 0;
-            for (Integer j = 0; j < 3; j++) {
-                if (board[j][i] != null) {
-                    sum += board[j][i];
-                }
-            }
-            if (sum.equals(this.playerXSumToWin)) {
-                return "X";
-            } else if (sum.equals(this.playerOSumToWin)) {
-                return "O";
-            }
+    private String getRandomWinningPhrase() {
+        if (this.phrases != null) {
+            return this.phrases.get((int) (Math.random() * this.phrases.size()));
         }
-        return null;
+        return "Good game!";
     }
-
-    private String validateDiagonals(final Integer[][] board) {
-        //right diagonal
-        Integer sum = 0;
-        for (Integer i = 0; i < 3; i++) {
-            if (board[i][i] != null) {
-                sum += board[i][i];
-            }
-            if (sum.equals(this.playerXSumToWin)) {
-                return "X";
-            } else if (sum.equals(this.playerOSumToWin)) {
-                return "O";
-            }
-        }
-
-        //left diagonal
-        sum = 0;
-        for (Integer i = 0; i < 3; i++) {
-            if (board[i][2 - i] != null) {
-                sum += board[i][2 - i];
-            }
-            if (sum.equals(this.playerXSumToWin)) {
-                return "X";
-            } else if (sum.equals(this.playerOSumToWin)) {
-                return "O";
-            }
-        }
-        return null;
-    }
-
 }
