@@ -1,5 +1,6 @@
 package com.antonio.controller;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Optional;
 import com.antonio.model.Player;
 import com.antonio.util.BoardValidations;
 import com.antonio.util.MessageLoader;
+import com.antonio.util.SongLoader;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -20,6 +22,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.media.AudioClip;
 
 public class PrimaryController {
 
@@ -30,6 +33,8 @@ public class PrimaryController {
             Map.of("X", 1, "O", -1)
     );
     private final List<String> phrases = MessageLoader.loadPhrasesFromFile();
+    private final List<String> songs = SongLoader.loadSongsFromFile();
+    private AudioClip mediaPlayer;
 
     @FXML
     private TextField textField00;
@@ -191,6 +196,7 @@ public class PrimaryController {
         dialog.setTitle("The winner is " + winnerPlayer.getName());
         dialog.setContentText(winnerPlayer.getName() + " says: " + this.getRandomWinningPhrase());
         dialog.getDialogPane().getButtonTypes().addAll(javafx.scene.control.ButtonType.OK);
+        reproduceSong();
         dialog.showAndWait();
     }
 
@@ -199,5 +205,34 @@ public class PrimaryController {
             return this.phrases.get((int) (Math.random() * this.phrases.size()));
         }
         return "Good game!";
+    }
+    private String getRandomSong() {
+        if (this.songs != null) {
+            return this.songs.get((int) (Math.random() * this.songs.size()));
+        }
+        return null;
+    }
+
+    private void reproduceSong() {
+        String songFileName = this.getRandomSong();
+        if (songFileName == null) {
+            System.err.println("No song available to play.");
+            return;
+        }
+
+        String resourcePath = "/com/antonio/songs/" + songFileName + ".mp3";
+        URL resource = getClass().getResource(resourcePath);
+
+        if (resource == null) {
+            System.err.println("File not found: " + resourcePath);
+            return;
+        }
+
+        try {
+            this.mediaPlayer = new AudioClip(resource.toString());
+            this.mediaPlayer.play();
+        } catch (Exception e) {
+            System.err.println("Error playing media: " + e.getMessage());
+        }
     }
 }
