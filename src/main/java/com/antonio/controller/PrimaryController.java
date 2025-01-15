@@ -14,6 +14,7 @@ import com.antonio.util.SongLoader;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
@@ -30,11 +31,9 @@ public class PrimaryController {
     private final Player playerO = new Player();
     private Player activePlayer;
     private final HashMap<String, Integer> playerValues = new HashMap<>(
-            Map.of("X", 1, "O", -1)
-    );
+            Map.of("X", 1, "O", -1));
     private final List<String> phrases = MessageLoader.loadPhrasesFromFile();
     private final List<String> songs = SongLoader.loadSongsFromFile();
-    private AudioClip mediaPlayer;
 
     @FXML
     private TextField textField00;
@@ -62,25 +61,22 @@ public class PrimaryController {
     private TableColumn<Player, Integer> winsTableColumn;
     @FXML
     private TableColumn<Player, String> playerNameTableColumn;
-    
+    private AudioClip audioClip;
+
     @FXML
     public void initialize() {
-        
-        //Player inititalization
-        this.playerX.setName(getPlayerName("Player X"));
-        this.playerX.setRole("X");
-        this.playerO.setRole("O");
-        this.playerO.setName(getPlayerName("Player O"));
+
+        // Player inititalization
+        initializePlayers();
         activePlayer = playerX;
         this.labelTurn.setText("Turn: " + activePlayer.getName() + " (" + activePlayer.getRole() + ")");
-        
-        
-        //leader board initialization
+
+        // leader board initialization
         winsTableColumn.setCellValueFactory(new PropertyValueFactory<>("score"));
         playerNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         updateTable();
 
-        //Board initialization
+        // Board initialization
         textField00.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
         textField01.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
         textField02.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
@@ -92,11 +88,26 @@ public class PrimaryController {
         textField22.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
     }
 
+    private void initializePlayers() {
+        this.playerX.setName(getPlayerName("Player X"));
+        this.playerX.setRole("X");
+        this.playerO.setRole("O");
+        this.playerO.setName(getPlayerName("Player O"));
+        while (this.playerX.getName().equals(this.playerO.getName())) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Repeated Player Names");
+            alert.setHeaderText(null);
+            alert.setContentText("Player names must be different. Please enter different names.");
+            alert.showAndWait();
+            this.playerX.setName(getPlayerName("Player X"));
+            this.playerO.setName(getPlayerName("Player O"));
+        }
+    }
+
     private void updateTable() {
         ObservableList<Player> leaderBoard = FXCollections.observableArrayList(
                 this.playerX,
-                this.playerO
-        );
+                this.playerO);
         FXCollections.sort(leaderBoard, (p1, p2) -> p2.getScore().compareTo(p1.getScore()));
         leaderBoardTableView.setItems(leaderBoard);
         leaderBoardTableView.refresh();
@@ -198,6 +209,7 @@ public class PrimaryController {
         dialog.getDialogPane().getButtonTypes().addAll(javafx.scene.control.ButtonType.OK);
         reproduceSong();
         dialog.showAndWait();
+        this.audioClip.stop();
     }
 
     private String getRandomWinningPhrase() {
@@ -206,6 +218,7 @@ public class PrimaryController {
         }
         return "Good game!";
     }
+
     private String getRandomSong() {
         if (this.songs != null) {
             return this.songs.get((int) (Math.random() * this.songs.size()));
@@ -215,12 +228,13 @@ public class PrimaryController {
 
     private void reproduceSong() {
         String songFileName = this.getRandomSong();
+
         if (songFileName == null) {
             System.err.println("No song available to play.");
             return;
         }
 
-        String resourcePath = "/com/antonio/songs/" + songFileName + ".mp3";
+        String resourcePath = "/com/antonio/songs/" + songFileName + ".wav";
         URL resource = getClass().getResource(resourcePath);
 
         if (resource == null) {
@@ -229,9 +243,11 @@ public class PrimaryController {
         }
 
         try {
-            this.mediaPlayer = new AudioClip(resource.toString());
-            this.mediaPlayer.play();
+            this.audioClip = new AudioClip(resource.toExternalForm());
+            this.audioClip.setCycleCount(AudioClip.INDEFINITE);
+            this.audioClip.play();
         } catch (Exception e) {
+            e.printStackTrace();
             System.err.println("Error playing media: " + e.getMessage());
         }
     }

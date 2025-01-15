@@ -11,7 +11,7 @@ picky
 baby
 gangnam-style
 don
-u-cant-touch-this   
+u-cant-touch-this
 never-gonna-give-you-up
 careless-whisper
 yonaguni
@@ -22,3 +22,6 @@ kulikitaka
 la-vaca
 party-rock-anthem
 sangoloteadito
+ganador-de-mil-batallas
+baby2
+in-da-club
