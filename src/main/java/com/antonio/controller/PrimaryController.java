@@ -1,12 +1,14 @@
 package com.antonio.controller;
 
 import java.net.URL;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import com.antonio.model.Player;
+import com.antonio.repository.PlayerRepository;
 import com.antonio.util.BoardValidations;
 import com.antonio.util.MessageLoader;
 import com.antonio.util.SongLoader;
@@ -27,8 +29,8 @@ import javafx.scene.media.AudioClip;
 
 public class PrimaryController {
 
-    private final Player playerX = new Player();
-    private final Player playerO = new Player();
+    private Player playerX = new Player();
+    private Player playerO = new Player();
     private Player activePlayer;
     private final HashMap<String, Integer> playerValues = new HashMap<>(
             Map.of("X", 1, "O", -1));
@@ -64,7 +66,7 @@ public class PrimaryController {
     private AudioClip audioClip;
 
     @FXML
-    public void initialize() {
+    public void initialize() throws SQLException {
 
         // Player inititalization
         initializePlayers();
@@ -88,7 +90,7 @@ public class PrimaryController {
         textField22.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
     }
 
-    private void initializePlayers() {
+    private void initializePlayers() throws SQLException {
         this.playerX.setName(getPlayerName("Player X"));
         this.playerX.setRole("X");
         this.playerO.setRole("O");
@@ -102,6 +104,10 @@ public class PrimaryController {
             this.playerX.setName(getPlayerName("Player X"));
             this.playerO.setName(getPlayerName("Player O"));
         }
+        this.playerX = PlayerRepository.selectPlayer(playerX);
+        this.playerX.setRole("X");
+        this.playerO = PlayerRepository.selectPlayer(playerO);
+        this.playerO.setRole("O");
     }
 
     private void updateTable() {
@@ -199,6 +205,11 @@ public class PrimaryController {
             resetBoard();
             showWinnerDialog(winnerPlayer);
             updateTable();
+            try {
+                PlayerRepository.updatePlayersScore(this.playerX, this.playerO);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
