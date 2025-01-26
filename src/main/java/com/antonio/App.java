@@ -1,9 +1,6 @@
 package com.antonio;
 
 import java.io.IOException;
-import java.sql.SQLException;
-
-import com.antonio.repository.PlayerRepository;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -26,18 +23,9 @@ public class App extends Application {
         primaryStage.setHeight(370);
         primaryStage.setResizable(false);
         primaryStage.setOnCloseRequest(eh -> {
-            saveGameResults();
             System.exit(0);
         });
         primaryStage.show();
-    }
-
-    private void saveGameResults() {
-        try {
-            PlayerRepository.saveGameResults();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     public static void setRoot(String fxml) throws IOException {

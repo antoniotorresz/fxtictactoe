@@ -107,6 +107,19 @@ public class PlayerRepository {
         }
     }
 
+    public static void saveWinner(final Player currentPlayer) {
+        try (Connection conn = Database.getDatabaseConnection();
+                PreparedStatement upPreparedStatement = conn.prepareStatement(UPDATE_PLAYER_SCORE)) {
+            Player player = PlayerRepository.selectPlayer(currentPlayer);
+            player.setScore(player.getScore() + 1);
+            upPreparedStatement.setInt(1, player.getScore());
+            upPreparedStatement.setString(2, player.getName());
+            upPreparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Retrieves the leaderboard of players sorted by their scores.
      *

@@ -111,28 +111,38 @@ public class PrimaryController {
     }
 
     private void initializePlayers() throws SQLException {
-        this.playerX = new Player();
-        this.playerO = new Player();
-        this.playerX.setName(getPlayerName("Player X"));
-        this.playerX.setRole("X");
-        this.playerO.setRole("O");
-        this.playerO.setName(getPlayerName("Player O"));
+        this.playerX = createPlayer("Player X", "X");
+        this.playerO = createPlayer("Player O", "O");
+
         while (this.playerX.getName().equals(this.playerO.getName())) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Repeated Player Names");
-            alert.setHeaderText(null);
-            alert.setContentText("Player names must be different. Please enter different names.");
-            alert.showAndWait();
+            showAlert("Repeated Player Names", "Player names must be different. Please enter different names.");
             this.playerX.setName(getPlayerName("Player X"));
             this.playerO.setName(getPlayerName("Player O"));
         }
+
         this.playerX = PlayerRepository.selectPlayer(playerX);
-        this.playerX.setRole("X");
-        this.playerX.setScore(0);
         this.playerO = PlayerRepository.selectPlayer(playerO);
-        this.playerO.setRole("O");
+        resetPlayerScores();
+    }
+
+    private Player createPlayer(String defaultName, String role) {
+        Player player = new Player();
+        player.setName(getPlayerName(defaultName));
+        player.setRole(role);
+        return player;
+    }
+
+    private void showAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
+
+    private void resetPlayerScores() {
+        this.playerX.setScore(0);
         this.playerO.setScore(0);
-        writeCurrentGame();
     }
 
     private void writeCurrentGame() {
@@ -233,8 +243,8 @@ public class PrimaryController {
             }
             resetBoard();
             showWinnerDialog(winnerPlayer);
+            PlayerRepository.saveWinner(winnerPlayer);
             updateTable();
-            writeCurrentGame();
         }
     }
 
