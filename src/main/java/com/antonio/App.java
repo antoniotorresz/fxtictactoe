@@ -1,6 +1,9 @@
 package com.antonio;
 
 import java.io.IOException;
+import java.sql.SQLException;
+
+import com.antonio.repository.PlayerRepository;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -16,16 +19,28 @@ public class App extends Application {
     private static Scene scene;
 
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage primaryStage) throws IOException {
         scene = new Scene(loadFXML("primary"));
-        stage.setScene(scene);
-        stage.setWidth(451);
-        stage.setHeight(370);
-        stage.setResizable(false);
-        stage.show();
+        primaryStage.setScene(scene);
+        primaryStage.setWidth(451);
+        primaryStage.setHeight(370);
+        primaryStage.setResizable(false);
+        primaryStage.setOnCloseRequest(eh -> {
+            saveGameResults();
+            System.exit(0);
+        });
+        primaryStage.show();
     }
 
-    static void setRoot(String fxml) throws IOException {
+    private void saveGameResults() {
+        try {
+            PlayerRepository.saveGameResults();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void setRoot(String fxml) throws IOException {
         scene.setRoot(loadFXML(fxml));
     }
 
@@ -36,6 +51,20 @@ public class App extends Application {
 
     public static void main(String[] args) {
         launch();
+    }
+
+    public static void openNewScene(String fxml) {
+        try {
+            Scene newScene = new Scene(loadFXML(fxml));
+            Stage newStage = new Stage();
+            newStage.setScene(newScene);
+            newStage.setWidth(451);
+            newStage.setHeight(370);
+            newStage.setResizable(false);
+            newStage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

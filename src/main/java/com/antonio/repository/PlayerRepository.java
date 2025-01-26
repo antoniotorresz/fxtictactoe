@@ -7,7 +7,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.antonio.model.Game;
 import com.antonio.model.Player;
+import com.antonio.util.CsvUtils;
 
 public class PlayerRepository {
     /**
@@ -39,7 +41,7 @@ public class PlayerRepository {
      * Inserts a new player into the database.
      *
      * @param player the Player object containing the player's details to be
-     *               inserted* 
+     *               inserted*
      * @throws SQLException if a database access error occurs or the SQL statement
      *                      fails
      */
@@ -85,26 +87,23 @@ public class PlayerRepository {
      * @param playerO the player O whose score needs to be updated
      * @throws SQLException if a database access error occurs
      */
-    public static void updatePlayersScore(final Player playerX, final Player playerO) throws SQLException {
+    public static void saveGameResults() throws SQLException {
+
+        Game currentGame = CsvUtils.getCurrentGame();
+        Player playerX = currentGame.getPlayerX();
+        Player playerO = currentGame.getPlayerO();
+
         try (Connection conn = Database.getDatabaseConnection();
-                PreparedStatement updateStmt = conn.prepareStatement(UPDATE_PLAYER_SCORE);
-                PreparedStatement selectPlayerStmt = conn.prepareStatement(SELECT_PLAYER)) {
-            try (ResultSet resultX = selectPlayerStmt.executeQuery()) {
-                selectPlayerStmt.setString(1, playerX.getName());
-                if (resultX.next()) {
-                    updateStmt.setInt(1, resultX.getInt("score") + playerX.getScore());
-                    updateStmt.setString(2, playerX.getName());
-                    updateStmt.executeUpdate();
-                }
-            }
-            try (ResultSet resultO = selectPlayerStmt.executeQuery()) {
-                selectPlayerStmt.setString(1, playerO.getName());
-                if (resultO.next()) {
-                    updateStmt.setInt(1, resultO.getInt("score") + playerO.getScore());
-                    updateStmt.setString(2, playerO.getName());
-                    updateStmt.executeUpdate();
-                }
-            }
+                PreparedStatement upPreparedStatement = conn.prepareStatement(UPDATE_PLAYER_SCORE)) {
+            upPreparedStatement.setInt(1, playerX.getScore());
+            upPreparedStatement.setString(2, playerX.getName());
+            upPreparedStatement.executeUpdate();
+            upPreparedStatement.setInt(1, playerO.getScore());
+            upPreparedStatement.setString(2, playerO.getName());
+            upPreparedStatement.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

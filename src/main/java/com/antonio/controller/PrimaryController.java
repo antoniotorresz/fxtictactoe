@@ -7,16 +7,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.antonio.App;
 import com.antonio.model.Player;
 import com.antonio.repository.PlayerRepository;
 import com.antonio.util.BoardValidations;
+import com.antonio.util.CsvUtils;
 import com.antonio.util.MessageLoader;
 import com.antonio.util.SongLoader;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
@@ -29,9 +33,10 @@ import javafx.scene.media.AudioClip;
 
 public class PrimaryController {
 
-    private Player playerX = new Player();
-    private Player playerO = new Player();
+    private Player playerX;
+    private Player playerO;
     private Player activePlayer;
+    private static Boolean playersInitialized = false;
     private final HashMap<String, Integer> playerValues = new HashMap<>(
             Map.of("X", 1, "O", -1));
     private final List<String> phrases = MessageLoader.loadPhrasesFromFile();
@@ -63,17 +68,22 @@ public class PrimaryController {
     private TableColumn<Player, Integer> winsTableColumn;
     @FXML
     private TableColumn<Player, String> playerNameTableColumn;
+    @FXML
+    private Button clickToLeaderBoardBtn;
     private AudioClip audioClip;
 
     @FXML
     public void initialize() throws SQLException {
+        if (!playersInitialized) {
+            initializePlayers();
+            playersInitialized = true;
+        }
 
-        // Player inititalization
-        initializePlayers();
-        activePlayer = playerX;
+        // Player initialization
+        this.activePlayer = this.playerX;
         this.labelTurn.setText("Turn: " + activePlayer.getName() + " (" + activePlayer.getRole() + ")");
 
-        // leader board initialization
+        // Leader board initialization
         winsTableColumn.setCellValueFactory(new PropertyValueFactory<>("score"));
         playerNameTableColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         updateTable();
@@ -88,9 +98,21 @@ public class PrimaryController {
         textField20.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
         textField21.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
         textField22.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleTextFieldClick);
+
+        // Leader board button
+        clickToLeaderBoardBtn.setOnAction(event -> {
+            switchToLeaderBoard(event);
+        });
+    }
+
+    @FXML
+    private void switchToLeaderBoard(final ActionEvent event) {
+        App.openNewScene("leaderboard");
     }
 
     private void initializePlayers() throws SQLException {
+        this.playerX = new Player();
+        this.playerO = new Player();
         this.playerX.setName(getPlayerName("Player X"));
         this.playerX.setRole("X");
         this.playerO.setRole("O");
@@ -106,8 +128,15 @@ public class PrimaryController {
         }
         this.playerX = PlayerRepository.selectPlayer(playerX);
         this.playerX.setRole("X");
+        this.playerX.setScore(0);
         this.playerO = PlayerRepository.selectPlayer(playerO);
         this.playerO.setRole("O");
+        this.playerO.setScore(0);
+        writeCurrentGame();
+    }
+
+    private void writeCurrentGame() {
+        CsvUtils.saveGameResults(this.playerX, this.playerO);
     }
 
     private void updateTable() {
@@ -205,11 +234,7 @@ public class PrimaryController {
             resetBoard();
             showWinnerDialog(winnerPlayer);
             updateTable();
-            try {
-                PlayerRepository.updatePlayersScore(this.playerX, this.playerO);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            writeCurrentGame();
         }
     }
 
